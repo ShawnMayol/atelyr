@@ -4,14 +4,14 @@ import { useState, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import type { Product, Category } from "@/types/database"
-import { Search, ChevronDown } from "lucide-react"
+import { ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react"
 import AddToCartButton from "@/components/add-to-cart-button"
+import { getProductUrl, slugify } from "@/lib/utils"
 
 type ProductGridProps = {
   products: (Product & { category: Category })[]
   categories: Category[]
   initialCategory?: string
-  initialSearch?: string
   initialSort?: string
 }
 
@@ -19,33 +19,24 @@ export default function ProductGrid({
   products,
   categories,
   initialCategory,
-  initialSearch,
-  initialSort,
+  initialSort = "latest",
 }: ProductGridProps) {
-  const [search, setSearch] = useState(initialSearch || "")
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "")
-  const [sortOrder, setSortOrder] = useState(initialSort || "")
+  const [sortOrder, setSortOrder] = useState(initialSort || "latest")
+  const [minPrice, setMinPrice] = useState<string>("")
+  const [maxPrice, setMaxPrice] = useState<string>("")
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
+  // Filter and sort products
   const filtered = useMemo(() => {
     let result = [...products]
-
-    // Search filter
-    if (search) {
-      const query = search.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query) ||
-          p.category?.name.toLowerCase().includes(query)
-      )
-    }
 
     // Category filter
     if (selectedCategory) {
       const slugTarget = selectedCategory.toLowerCase().replace(/[^a-z0-9]/g, "")
       result = result.filter((p) => {
         if (!p.category) return p.category_id === selectedCategory
-        const catNameSlug = p.category.name.toLowerCase().replace(/[^a-z0-9]/g, "")
+        const catNameSlug = slugify(p.category.name)
         return (
           p.category_id === selectedCategory ||
           catNameSlug === slugTarget ||
@@ -54,136 +45,287 @@ export default function ProductGrid({
       })
     }
 
-    // Price sort
+    // Min Price filter
+    if (minPrice && !isNaN(Number(minPrice))) {
+      result = result.filter((p) => p.price >= Number(minPrice))
+    }
+
+    // Max Price filter
+    if (maxPrice && !isNaN(Number(maxPrice))) {
+      result = result.filter((p) => p.price <= Number(maxPrice))
+    }
+
+    // Sort order
     if (sortOrder === "price-asc") {
       result.sort((a, b) => a.price - b.price)
     } else if (sortOrder === "price-desc") {
       result.sort((a, b) => b.price - a.price)
+    } else if (sortOrder === "latest") {
+      result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    } else if (sortOrder === "most-sales") {
+      result.sort((a, b) => (b.stock || 0) - (a.stock || 0))
     }
 
     return result
-  }, [products, search, selectedCategory, sortOrder])
+  }, [products, selectedCategory, minPrice, maxPrice, sortOrder])
+
+  const handleResetFilters = () => {
+    setSelectedCategory("")
+    setMinPrice("")
+    setMaxPrice("")
+    setSortOrder("latest")
+  }
+
+  const setPricePreset = (min: string, max: string) => {
+    setMinPrice(min)
+    setMaxPrice(max)
+  }
 
   return (
-    <div>
-      {/* Filters bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-10 pb-6 border-b border-forest/10">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-forest/40" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-forest/15 bg-champagne-light py-2.5 pl-10 pr-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/30 focus:outline-none"
-          />
-        </div>
+    <div className="space-y-8">
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden flex items-center justify-between border-b border-forest/10 pb-4">
+        <button
+          onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+          className="inline-flex items-center gap-2 border border-forest/15 bg-light py-2 px-4 text-xs font-semibold uppercase tracking-wider text-forest"
+        >
+          <SlidersHorizontal className="size-3.5" />
+          Filters & Categories
+        </button>
 
-        <div className="flex items-center gap-3">
-          {/* Category filter */}
-          <div className="relative">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none border border-forest/15 bg-champagne-light py-2.5 pl-4 pr-10 text-xs font-medium tracking-wide uppercase text-forest/70 focus:border-forest/30 focus:outline-none cursor-pointer"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-forest/40 pointer-events-none" />
-          </div>
-
-          {/* Price sort */}
-          <div className="relative">
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="appearance-none border border-forest/15 bg-champagne-light py-2.5 pl-4 pr-10 text-xs font-medium tracking-wide uppercase text-forest/70 focus:border-forest/30 focus:outline-none cursor-pointer"
-            >
-              <option value="">Sort By</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-forest/40 pointer-events-none" />
-          </div>
+        {/* Sort Select (Mobile) */}
+        <div className="relative">
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="appearance-none border border-forest/15 bg-light py-2 pl-3 pr-8 text-xs font-semibold uppercase tracking-wider text-forest focus:outline-none cursor-pointer"
+          >
+            <option value="latest">Sort by Latest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="most-sales">Sort by Most Sales</option>
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-forest/40 pointer-events-none" />
         </div>
       </div>
 
-      {/* Results count */}
-      <p className="text-xs text-forest/50 mb-6">
-        {filtered.length} {filtered.length === 1 ? "product" : "products"}
-      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+        {/* Left Sidebar (Desktop + Mobile Collapsible) */}
+        <aside
+          className={`lg:col-span-1 space-y-8 ${
+            mobileFilterOpen ? "block" : "hidden lg:block"
+          }`}
+        >
+          {/* Categories Sidebar List */}
+          <div className="space-y-4 border-b border-forest/10 pb-6">
+            <h3 className="text-xs font-bold tracking-[0.3em] uppercase text-forest/50">
+              Categories
+            </h3>
+            <ul className="space-y-2 text-xs">
+              {categories.map((cat) => {
+                const isSelected =
+                  selectedCategory === cat.id ||
+                  selectedCategory === cat.name ||
+                  selectedCategory === slugify(cat.name)
+                return (
+                  <li key={cat.id}>
+                    <Link
+                      href={`/${slugify(cat.name)}`}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`block py-1.5 px-2 transition-colors uppercase tracking-wider font-semibold rounded-xs ${
+                        isSelected
+                          ? "bg-forest text-ghost-white"
+                          : "text-forest/70 hover:text-forest hover:bg-forest/5"
+                      }`}
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
 
-      {/* Product grid */}
-      {filtered.length === 0 ? (
-        <div className="py-20 text-center">
-          <p className="text-forest/50">No products found.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((product) => (
-            <div key={product.id} className="group">
-              <Link href={`/products/${product.id}`}>
-                <div className="aspect-[3/4] w-full overflow-hidden bg-champagne">
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      width={600}
-                      height={800}
-                      className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-forest/30">
-                      No Image
-                    </div>
-                  )}
-                </div>
-              </Link>
-              <div className="mt-4 space-y-1">
-                <p className="text-[10px] font-medium tracking-widest uppercase text-forest/50">
-                  {product.category?.name}
-                </p>
-                <Link href={`/products/${product.id}`}>
-                  <h3 className="text-sm font-medium text-forest group-hover:underline underline-offset-4">
-                    {product.name}
-                  </h3>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-forest/70">
-                    ₱{product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  </p>
-                  {product.stock <= 0 && (
-                    <span className="text-[10px] font-medium tracking-wide uppercase text-red-500">
-                      Out of Stock
-                    </span>
-                  )}
-                  {product.stock > 0 && product.stock <= 5 && (
-                    <span className="text-[10px] font-medium tracking-wide uppercase text-amber-600">
-                      Low Stock
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <Link
-                  href={`/products/${product.id}`}
-                  className="text-xs font-semibold tracking-widest uppercase text-forest/60 transition-colors hover:text-forest"
+          {/* Price Range Filter */}
+          <div className="space-y-4 border-b border-forest/10 pb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold tracking-[0.3em] uppercase text-forest/50">
+                Price Range
+              </h3>
+              {(minPrice || maxPrice) && (
+                <button
+                  onClick={() => setPricePreset("", "")}
+                  className="text-[10px] uppercase font-semibold text-forest/40 hover:text-forest underline"
                 >
-                  View Details
-                </Link>
-                <span className="text-forest/20">|</span>
-                <AddToCartButton product={product} variant="minimal" />
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Price Inputs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-forest/40">₱</span>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="w-full border border-forest/15 bg-light/50 py-1.5 pl-6 pr-2 text-xs text-forest placeholder:text-forest/30 focus:border-forest/40 focus:outline-none"
+                />
+              </div>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-forest/40">₱</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="w-full border border-forest/15 bg-light/50 py-1.5 pl-6 pr-2 text-xs text-forest placeholder:text-forest/30 focus:border-forest/40 focus:outline-none"
+                />
               </div>
             </div>
-          ))}
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                onClick={() => setPricePreset("", "1000")}
+                className="text-[10px] uppercase font-semibold border border-forest/15 px-2 py-1 text-forest/70 hover:bg-forest/5"
+              >
+                Under ₱1k
+              </button>
+              <button
+                onClick={() => setPricePreset("1000", "5000")}
+                className="text-[10px] uppercase font-semibold border border-forest/15 px-2 py-1 text-forest/70 hover:bg-forest/5"
+              >
+                ₱1k - ₱5k
+              </button>
+              <button
+                onClick={() => setPricePreset("5000", "10000")}
+                className="text-[10px] uppercase font-semibold border border-forest/15 px-2 py-1 text-forest/70 hover:bg-forest/5"
+              >
+                ₱5k - ₱10k
+              </button>
+              <button
+                onClick={() => setPricePreset("10000", "")}
+                className="text-[10px] uppercase font-semibold border border-forest/15 px-2 py-1 text-forest/70 hover:bg-forest/5"
+              >
+                ₱10k+
+              </button>
+            </div>
+          </div>
+
+          {/* Reset All Filters Button */}
+          <button
+            onClick={handleResetFilters}
+            className="flex items-center gap-2 w-full justify-center border border-forest/15 py-2 px-3 text-xs font-semibold uppercase tracking-wider text-forest/60 hover:text-forest hover:bg-forest/5 transition-colors"
+          >
+            <RotateCcw className="size-3.5" />
+            Reset All Filters
+          </button>
+        </aside>
+
+        {/* Right Main Grid */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Top Control Header Bar (Desktop) */}
+          <div className="hidden lg:flex items-center justify-between pb-4 border-b border-forest/10">
+            <p className="text-xs text-forest/50">
+              Showing <span className="font-semibold text-forest">{filtered.length}</span> {filtered.length === 1 ? "product" : "products"}
+            </p>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-forest/50">
+                Sort:
+              </span>
+              <div className="relative">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="appearance-none border border-forest/15 bg-light py-2 pl-3 pr-8 text-xs font-semibold uppercase tracking-wider text-forest focus:border-forest/40 focus:outline-none cursor-pointer"
+                >
+                  <option value="latest">Sort by Latest</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="most-sales">Sort by Most Sales</option>
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-forest/40 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Product Grid Listing */}
+          {filtered.length === 0 ? (
+            <div className="py-24 text-center border border-dashed border-forest/15 space-y-3">
+              <p className="text-sm text-forest/60 font-light">
+                No products match your filter criteria.
+              </p>
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-forest hover:underline"
+              >
+                Clear Filters & View All
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((product) => (
+                <div key={product.id} className="group flex flex-col justify-between">
+                  <div>
+                    <Link href={getProductUrl(product)}>
+                      <div className="aspect-[3/4] w-full overflow-hidden bg-champagne rounded-xs">
+                        {product.image_url ? (
+                          <Image
+                            src={product.image_url}
+                            alt={product.name}
+                            width={600}
+                            height={800}
+                            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-forest/30">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                    <div className="mt-4 space-y-1">
+                      <p className="text-[10px] font-medium tracking-widest uppercase text-forest/50">
+                        {product.category?.name}
+                      </p>
+                      <Link href={getProductUrl(product)}>
+                        <h3 className="text-sm font-medium text-forest group-hover:underline underline-offset-4 line-clamp-1">
+                          {product.name}
+                        </h3>
+                      </Link>
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <p className="text-sm font-medium text-forest">
+                          ₱{product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </p>
+                        {product.stock <= 0 && (
+                          <span className="text-[10px] font-medium tracking-wide uppercase text-red-500">
+                            Out of Stock
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-2 border-t border-forest/10 flex items-center justify-between">
+                    <Link
+                      href={getProductUrl(product)}
+                      className="text-xs font-semibold tracking-widest uppercase text-forest/60 transition-colors hover:text-forest"
+                    >
+                      Details
+                    </Link>
+                    <AddToCartButton product={product} variant="minimal" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
