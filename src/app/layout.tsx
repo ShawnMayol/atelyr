@@ -6,8 +6,13 @@ import { cn } from "@/lib/utils";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "ATELYR | E-Commerce Store",
-  description: "Modern e-commerce platform.",
+  title: "ATELYR | Quiet Luxury E-Commerce",
+  description: "Curated luxury essentials for the discerning individual.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
