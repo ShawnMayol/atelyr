@@ -5,6 +5,8 @@ import type { Product, Category } from "@/types/database"
 import { ArrowRight } from "lucide-react"
 import AddToCartButton from "@/components/add-to-cart-button"
 
+import { slugify, getProductUrl } from "@/lib/utils"
+
 export default async function HomePage() {
   const supabase = await createClient()
 
@@ -43,7 +45,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/products"
+              href={categories && categories.length > 0 ? `/${slugify(categories[0].name)}` : "#"}
               className="inline-flex items-center gap-2 bg-champagne px-8 py-3.5 text-xs font-semibold tracking-widest uppercase text-forest transition-colors hover:bg-champagne-dark"
             >
               Shop Collection
@@ -68,7 +70,7 @@ export default async function HomePage() {
             {(categories as Category[]).map((category) => (
               <Link
                 key={category.id}
-                href={`/products?category=${category.id}`}
+                href={`/${slugify(category.name)}`}
                 className="group relative flex h-48 items-end overflow-hidden bg-champagne p-6 transition-all hover:bg-champagne-dark"
               >
                 <div>
@@ -98,19 +100,12 @@ export default async function HomePage() {
                 New Arrivals
               </h2>
             </div>
-            <Link
-              href="/products"
-              className="hidden sm:flex items-center gap-1 text-xs font-semibold tracking-widest uppercase text-forest/60 transition-colors hover:text-forest"
-            >
-              View All
-              <ArrowRight className="size-3" />
-            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
             {normalizedProducts.map((product) => (
               <div key={product.id} className="group">
-                  <Link href={`/products/${product.id}`}>
+                  <Link href={getProductUrl(product)}>
                     <div className="aspect-[3/4] w-full overflow-hidden bg-champagne">
                       {product.image_url ? (
                         <Image
@@ -131,7 +126,7 @@ export default async function HomePage() {
                     <p className="text-[10px] font-medium tracking-widest uppercase text-forest/50">
                       {product.category?.name}
                     </p>
-                    <Link href={`/products/${product.id}`}>
+                    <Link href={getProductUrl(product)}>
                       <h3 className="text-sm font-medium text-forest group-hover:underline underline-offset-4">
                         {product.name}
                       </h3>
@@ -146,16 +141,6 @@ export default async function HomePage() {
                 </div>
               )
             )}
-          </div>
-
-          <div className="mt-10 text-center sm:hidden">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-forest/60 transition-colors hover:text-forest"
-            >
-              View All Products
-              <ArrowRight className="size-3" />
-            </Link>
           </div>
         </section>
       )}

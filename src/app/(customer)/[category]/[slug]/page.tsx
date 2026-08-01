@@ -5,14 +5,15 @@ import { notFound } from "next/navigation"
 import type { Product, Category } from "@/types/database"
 import { ArrowLeft } from "lucide-react"
 import ProductActions from "@/components/product-actions"
-import AddToCartButton from "@/components/add-to-cart-button"
+import { extractIdFromSlug, getProductUrl } from "@/lib/utils"
 
 export default async function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ category: string; slug: string }>
 }) {
-  const { id } = await params
+  const { category: categorySlug, slug } = await params
+  const id = extractIdFromSlug(slug)
   const supabase = await createClient()
 
   // Fetch product with category
@@ -31,21 +32,23 @@ export default async function ProductDetailPage({
   // Fetch related products (same category, exclude current)
   const { data: relatedProducts } = await supabase
     .from("products")
-    .select("*, category:categories(name)")
+    .select("*, category:categories(id, name)")
     .eq("category_id", typedProduct.category_id)
     .eq("status", "active")
     .neq("id", id)
     .limit(4)
 
+  const backCategoryUrl = `/${categorySlug}`
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
       {/* Back link */}
       <Link
-        href="/products"
+        href={backCategoryUrl}
         className="inline-flex items-center gap-1.5 text-xs font-medium tracking-widest uppercase text-forest/50 transition-colors hover:text-forest mb-10"
       >
         <ArrowLeft className="size-3.5" />
-        Back to Collection
+        Back to {typedProduct.category?.name || "Collection"}
       </Link>
 
       {/* Product detail */}
@@ -129,10 +132,10 @@ export default async function ProductDetailPage({
             You May Also Like
           </h2>
           <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {(relatedProducts as (Product & { category: { name: string } })[]).map(
+            {(relatedProducts as (Product & { category: Category })[]).map(
               (related) => (
                 <div key={related.id} className="group">
-                  <Link href={`/products/${related.id}`}>
+                  <Link href={getProductUrl(related)}>
                     <div className="aspect-[3/4] w-full overflow-hidden bg-champagne">
                       {related.image_url ? (
                         <Image
@@ -153,7 +156,7 @@ export default async function ProductDetailPage({
                     <p className="text-[10px] font-medium tracking-widest uppercase text-forest/50">
                       {related.category?.name}
                     </p>
-                    <Link href={`/products/${related.id}`}>
+                    <Link href={getProductUrl(related)}>
                       <h3 className="text-sm font-medium text-forest group-hover:underline underline-offset-4">
                         {related.name}
                       </h3>

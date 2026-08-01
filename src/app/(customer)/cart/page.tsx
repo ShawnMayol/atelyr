@@ -31,7 +31,7 @@ export default function CartPage() {
           Open Sidebar Cart
         </button>
         <Link
-          href="/products"
+          href="/"
           className="inline-flex items-center gap-2 border border-forest/15 px-6 py-3.5 text-xs font-semibold tracking-widest uppercase text-forest transition-colors hover:bg-champagne"
         >
           Browse Collection

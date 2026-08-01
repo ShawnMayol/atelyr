@@ -137,7 +137,7 @@ export default function CheckoutPage() {
         </div>
 
         <Link
-          href="/products"
+          href="/"
           className="inline-flex items-center gap-2 bg-forest-ghost-white transition-colors hover:bg-forest-light"
         >
           Continue Shopping
@@ -157,7 +157,7 @@ export default function CheckoutPage() {
           Add some items before proceeding to checkout.
         </p>
         <Link
-          href="/products"
+          href="/"
           className="inline-flex items-center gap-2 bg-forest-ghost-white transition-colors hover:bg-forest-light"
         >
           Browse Collection
@@ -198,7 +198,7 @@ export default function CheckoutPage() {
                 type="text"
                 value={form.customerName}
                 onChange={(e) => updateField("customerName", e.target.value)}
-                className="w-full border border-forest/15 bg-champagne-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
+                className="w-full border border-forest/15 bg-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
                 placeholder="Eleanor Vance"
               />
               {errors.customerName && (
@@ -215,7 +215,7 @@ export default function CheckoutPage() {
                 type="email"
                 value={form.email}
                 onChange={(e) => updateField("email", e.target.value)}
-                className="w-full border border-forest/15 bg-champagne-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
+                className="w-full border border-forest/15 bg-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
                 placeholder="eleanor@example.com"
               />
               {errors.email && (
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
                 type="tel"
                 value={form.contactNumber}
                 onChange={(e) => updateField("contactNumber", e.target.value)}
-                className="w-full border border-forest/15 bg-champagne-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
+                className="w-full border border-forest/15 bg-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
                 placeholder="+639171234567"
               />
             </div>
@@ -246,7 +246,7 @@ export default function CheckoutPage() {
                 value={form.address}
                 onChange={(e) => updateField("address", e.target.value)}
                 rows={3}
-                className="w-full border border-forest/15 bg-champagne-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none resize-none"
+                className="w-full border border-forest/15 bg-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none resize-none"
                 placeholder="Suite 402, One Bonifacio High Street, BGC, Taguig City"
               />
               {errors.address && (
@@ -292,7 +292,7 @@ export default function CheckoutPage() {
                 value={form.notes}
                 onChange={(e) => updateField("notes", e.target.value)}
                 rows={2}
-                className="w-full border border-forest/15 bg-champagne-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none resize-none"
+                className="w-full border border-forest/15 bg-light py-3 px-4 text-sm text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none resize-none"
                 placeholder="Special delivery instructions..."
               />
             </div>

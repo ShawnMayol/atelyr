@@ -4,6 +4,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useCartStore } from "@/stores/cart-store"
+import { getProductUrl } from "@/lib/utils"
 import { X, Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react"
 
 export default function CartDrawer() {
@@ -27,21 +28,21 @@ export default function CartDrawer() {
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         {/* Slide-over panel with smooth bezier slide animation */}
         <div
-          className={`w-screen max-w-md bg-champagne-light shadow-2xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] border-l border-forest/10 pointer-events-auto ${
+          className={`w-screen max-w-md bg-light shadow-2xl flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] border-l border-forest/10 pointer-events-auto ${
             isOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
           {/* Drawer Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-forest/15 bg-champagne-light">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-forest/15 bg-light">
             <div className="flex items-center gap-2">
               <ShoppingBag className="size-5 text-forest" />
               <h2 className="text-base font-semibold tracking-wider uppercase text-forest">
-                Shopping Cart ({totalItems})
+                Shopping Bag ({totalItems})
               </h2>
             </div>
             <button
               onClick={closeCart}
-              className="p-1.5 text-forest/60 hover:text-forest transition-colors rounded-sm"
+              className="p-1.5 text-forest/60 hover:text-forest transition-colors rounded-sm hover:cursor-pointer"
               aria-label="Close cart"
             >
               <X className="size-5" />
@@ -56,14 +57,11 @@ export default function CartDrawer() {
                   <ShoppingBag className="size-8" />
                 </div>
                 <h3 className="text-lg font-light tracking-tight text-forest">
-                  Your Cart is Empty
+                  Your shopping bag is empty
                 </h3>
-                <p className="text-xs text-forest/50 max-w-xs leading-relaxed">
-                  Discover our curated luxury essentials and add your favorite items.
-                </p>
                 <button
                   onClick={closeCart}
-                  className="mt-4 inline-flex items-center gap-2 bg-forest px-6 py-3 text-xs font-semibold tracking-widest uppercase text-ghost-white transition-colors hover:bg-forest-light"
+                  className="inline-flex items-center gap-2 bg-forest px-6 py-3 text-xs font-semibold tracking-widest uppercase text-ghost-white transition-colors hover:bg-forest-light hover:cursor-pointer"
                 >
                   Continue Browsing
                 </button>
@@ -80,7 +78,7 @@ export default function CartDrawer() {
                   >
                     {/* Item Image */}
                     <Link
-                      href={`/products/${item.product.id}`}
+                      href={getProductUrl(item.product)}
                       onClick={closeCart}
                       className="aspect-[3/4] w-20 flex-shrink-0 overflow-hidden bg-champagne rounded-xs group"
                     >
@@ -104,7 +102,7 @@ export default function CartDrawer() {
                       <div>
                         <div className="flex justify-between items-start">
                           <Link
-                            href={`/products/${item.product.id}`}
+                            href={getProductUrl(item.product)}
                             onClick={closeCart}
                             className="text-xs font-medium text-forest hover:underline line-clamp-1"
                           >
@@ -161,7 +159,7 @@ export default function CartDrawer() {
 
           {/* Drawer Footer: Subtotal + Checkout Button */}
           {items.length > 0 && (
-            <div className="border-t border-forest/15 px-6 py-5 bg-champagne-light space-y-4">
+            <div className="border-t border-forest/15 px-6 py-5 bg-light space-y-4">
               <div className="flex justify-between items-center text-sm font-medium">
                 <span className="uppercase tracking-widest text-xs text-forest/60">Subtotal</span>
                 <span className="text-lg font-light text-forest">
