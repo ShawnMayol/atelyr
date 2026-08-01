@@ -16,6 +16,7 @@ const categories = [
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const cartItemCount = useCartStore((state) => state.getTotalItems())
+  const openCart = useCartStore((state) => state.openCart)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-forest/10 bg-champagne-light/80 backdrop-blur-md">
@@ -69,8 +70,9 @@ export default function Navbar() {
             <Search className="size-5" />
           </Link>
 
-          <Link
-            href="/cart"
+          <button
+            type="button"
+            onClick={openCart}
             className="relative text-forest/70 transition-colors hover:text-forest"
             aria-label="Shopping cart"
           >
@@ -80,7 +82,7 @@ export default function Navbar() {
                 {cartItemCount}
               </span>
             )}
-          </Link>
+          </button>
         </div>
       </nav>
 
