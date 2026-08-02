@@ -13,6 +13,7 @@ export default async function AdminCategoriesPage() {
   const categoriesWithCounts = (categories || []).map((cat: any) => ({
     id: cat.id,
     name: cat.name,
+    image_url: cat.image_url || null,
     created_at: cat.created_at,
     product_count: Array.isArray(cat.products) ? cat.products.length : 0,
   }))

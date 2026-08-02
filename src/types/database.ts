@@ -19,6 +19,7 @@ export type UserRole = 'customer' | 'admin'
 export type Category = {
   id: string
   name: string
+  image_url?: string | null
   created_at: string
 }
 

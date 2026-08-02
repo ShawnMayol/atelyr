@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import type { Category } from "@/types/database"
 import { createCategory, updateCategory, deleteCategory } from "@/app/admin/categories/actions"
-import { Plus, Edit2, Trash2, X, AlertTriangle, Loader2 } from "lucide-react"
+import { Plus, Edit2, Trash2, X, AlertTriangle, Loader2, Upload } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 type CategoryWithProductCount = Category & {
   product_count?: number
@@ -19,15 +21,18 @@ export default function AdminCategoryManager({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categoryName, setCategoryName] = useState("")
+  const [categoryImage, setCategoryImage] = useState("")
   const [deletingCategory, setDeletingCategory] = useState<CategoryWithProductCount | null>(null)
 
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [guardError, setGuardError] = useState<string | null>(null)
 
   const openCreateDialog = () => {
     setEditingCategory(null)
     setCategoryName("")
+    setCategoryImage("")
     setFormError(null)
     setIsDialogOpen(true)
   }
@@ -35,8 +40,44 @@ export default function AdminCategoryManager({
   const openEditDialog = (category: Category) => {
     setEditingCategory(category)
     setCategoryName(category.name)
+    setCategoryImage(category.image_url || "")
     setFormError(null)
     setIsDialogOpen(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    setFormError(null)
+
+    try {
+      const supabase = createClient()
+      const ext = file.name.split(".").pop() || "jpg"
+      const fileName = `category-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        })
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("products")
+        .getPublicUrl(fileName)
+
+      setCategoryImage(urlData.publicUrl)
+    } catch (err: any) {
+      setFormError(err.message || "Failed to upload image to Supabase Storage.")
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -52,9 +93,9 @@ export default function AdminCategoryManager({
     let res
 
     if (editingCategory) {
-      res = await updateCategory(editingCategory.id, categoryName)
+      res = await updateCategory(editingCategory.id, categoryName, categoryImage)
     } else {
-      res = await createCategory(categoryName)
+      res = await createCategory(categoryName, categoryImage)
     }
 
     setLoading(false)
@@ -104,6 +145,7 @@ export default function AdminCategoryManager({
           <table className="w-full text-left text-xs">
             <thead className="bg-champagne border-b border-forest/15 text-forest/50 uppercase tracking-wider">
               <tr>
+                <th className="py-3 px-4 font-semibold">Cover Image</th>
                 <th className="py-3 px-4 font-semibold">Category Name</th>
                 <th className="py-3 px-4 font-semibold">Assigned Products</th>
                 <th className="py-3 px-4 font-semibold">Created Date</th>
@@ -114,7 +156,22 @@ export default function AdminCategoryManager({
               {categories.length > 0 ? (
                 categories.map((category) => (
                   <tr key={category.id} className="hover:bg-champagne/50">
-                    <td className="py-3.5 px-4 font-medium text-forest">
+                    <td className="py-3 px-4">
+                      <div className="size-12 bg-champagne overflow-hidden rounded-xs border border-forest/15 flex items-center justify-center">
+                        {category.image_url ? (
+                          <Image
+                            src={category.image_url}
+                            alt={category.name}
+                            width={48}
+                            height={48}
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[9px] text-forest/40 uppercase">No image</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-forest">
                       {category.name}
                     </td>
                     <td className="py-3.5 px-4 font-medium text-forest/60">
@@ -148,7 +205,7 @@ export default function AdminCategoryManager({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-forest/40">
+                  <td colSpan={5} className="py-12 text-center text-forest/40">
                     No categories created yet.
                   </td>
                 </tr>
@@ -161,7 +218,7 @@ export default function AdminCategoryManager({
       {/* Create / Edit Modal */}
       {isDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md bg-light p-6 shadow-xl border border-forest/15">
+          <div className="w-full max-w-md bg-light p-6 shadow-xl border border-forest/15 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-forest/15 pb-4 mb-6">
               <h2 className="text-sm font-semibold uppercase tracking-widest text-forest">
                 {editingCategory ? "Edit Category" : "Add New Category"}
@@ -195,6 +252,83 @@ export default function AdminCategoryManager({
                 />
               </div>
 
+              {/* Category Cover Image Upload Zone */}
+              <div>
+                <label className="block font-semibold uppercase tracking-wider text-forest/50 mb-1">
+                  Cover Image
+                </label>
+                
+                <div className="space-y-3">
+                  {/* Thumbnail Preview if Image Exists */}
+                  {categoryImage ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-forest/50">Live Preview:</p>
+                      <div className="relative aspect-[4/5] w-32 overflow-hidden rounded-xs border border-forest/15 bg-champagne group">
+                        <Image
+                          src={categoryImage}
+                          alt="Category cover preview"
+                          width={160}
+                          height={200}
+                          unoptimized
+                          className="h-full w-full object-cover object-center"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCategoryImage("")}
+                          className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                          title="Remove Image"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Upload Button Input */}
+                  <div className="relative border-2 border-dashed border-forest/20 rounded-xs p-4 text-center hover:border-forest/40 transition-colors bg-champagne/30">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 size-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-1 pointer-events-none">
+                      {uploadingImage ? (
+                        <>
+                          <Loader2 className="size-6 text-forest animate-spin mb-1" />
+                          <p className="text-xs font-semibold text-forest">Uploading image to Supabase...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="size-5 text-forest/50 mb-1" />
+                          <p className="text-xs font-semibold text-forest">
+                            {categoryImage ? "Replace Cover Image File" : "Upload Cover Image File"}
+                          </p>
+                          <p className="text-[10px] text-forest/40">
+                            JPG, PNG, WEBP up to 5MB
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Manual URL Input */}
+                  <div className="pt-1">
+                    <label className="block font-semibold uppercase tracking-wider text-forest/40 text-[10px] mb-1">
+                      Or Image URL:
+                    </label>
+                    <input
+                      type="url"
+                      value={categoryImage}
+                      onChange={(e) => setCategoryImage(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full border border-forest/15 p-2 text-forest focus:outline-none focus:border-forest/40"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 border-t border-forest/15 pt-4 mt-6">
                 <button
                   type="button"
@@ -205,7 +339,7 @@ export default function AdminCategoryManager({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploadingImage}
                   className="px-6 py-2.5 uppercase tracking-wider font-semibold bg-forest-ghost-white hover:bg-forest-light disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   {loading && <Loader2 className="size-3.5 animate-spin" />}
