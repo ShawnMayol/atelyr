@@ -11,7 +11,7 @@ type ProductActionsProps = {
 
 export default function ProductActions({ product }: ProductActionsProps) {
   const [quantity, setQuantity] = useState(1)
-  const maxQuantity = Math.min(product.stock, 10)
+  const maxQuantity = product.stock
 
   const decrease = () => {
     if (quantity > 1) setQuantity(quantity - 1)

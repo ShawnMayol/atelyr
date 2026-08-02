@@ -3,11 +3,14 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-export async function createCategory(name: string) {
+export async function createCategory(name: string, imageUrl?: string | null) {
   if (!name.trim()) return { success: false, error: "Category name is required." }
   const supabase = await createClient()
 
-  const { error } = await supabase.from("categories").insert({ name: name.trim() })
+  const { error } = await supabase.from("categories").insert({
+    name: name.trim(),
+    image_url: imageUrl || null,
+  })
 
   if (error) {
     return { success: false, error: error.message }
@@ -20,13 +23,16 @@ export async function createCategory(name: string) {
   return { success: true }
 }
 
-export async function updateCategory(id: string, name: string) {
+export async function updateCategory(id: string, name: string, imageUrl?: string | null) {
   if (!name.trim()) return { success: false, error: "Category name is required." }
   const supabase = await createClient()
 
   const { error } = await supabase
     .from("categories")
-    .update({ name: name.trim() })
+    .update({
+      name: name.trim(),
+      image_url: imageUrl || null,
+    })
     .eq("id", id)
 
   if (error) {

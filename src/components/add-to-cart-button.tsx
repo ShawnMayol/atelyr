@@ -17,6 +17,7 @@ export default function AddToCartButton({
   variant = "default",
 }: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem)
+  const openCart = useCartStore((state) => state.openCart)
   const [added, setAdded] = useState(false)
 
   const isDisabled = product.stock <= 0 || product.status !== "active"
@@ -24,6 +25,7 @@ export default function AddToCartButton({
   const handleAdd = () => {
     if (isDisabled) return
     addItem(product, quantity)
+    openCart()
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }
@@ -57,7 +59,7 @@ export default function AddToCartButton({
         ) : (
           <>
             <ShoppingBag className="size-3.5" />
-            Add to Cart
+            Add to Bag
           </>
         )}
       </button>
@@ -67,17 +69,16 @@ export default function AddToCartButton({
   return (
     <button
       onClick={handleAdd}
-      className="inline-flex w-full items-center justify-center gap-2 bg-forest px-6 py-3.5 text-xs font-semibold tracking-widest uppercase text-ghost-white transition-colors hover:bg-forest-light"
+      className="inline-flex w-full items-center justify-center gap-2 bg-forest px-6 py-4 text-xs font-semibold tracking-[0.2em] uppercase text-ghost-white transition-colors hover:bg-forest-light shadow-sm cursor-pointer"
     >
       {added ? (
         <>
           <Check className="size-4" />
-          Added to Cart
+          Added to Bag
         </>
       ) : (
         <>
-          <ShoppingBag className="size-4" />
-          Add to Cart
+          ADD TO BAG
         </>
       )}
     </button>
