@@ -68,7 +68,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Product Details + Clean Cart Button on the Right */}
         <div className="mt-3 flex items-center justify-between gap-3">
           <Link href={getProductUrl(product)} className="flex-1 min-w-0">
-            <h3 className="text-xs font-semibold text-forest uppercase tracking-wider line-clamp-1 group-hover:underline underline-offset-4">
+            <h3 className="text-xs font-semibold text-forest uppercase tracking-wider line-clamp-2 transition-colors group-hover:text-forest/80">
               {product.name}
             </h3>
             <p className="text-xs font-medium text-forest/70 mt-0.5">
