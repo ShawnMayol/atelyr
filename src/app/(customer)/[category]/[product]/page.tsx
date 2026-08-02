@@ -167,7 +167,7 @@ export default async function ProductDetailPage({
 
       {/* Related Products */}
       {relatedProducts && relatedProducts.length > 0 && (
-        <section className="mt-24 border-t border-forest/10 pt-16">
+        <section className="mt-10">
           <h2 className="text-xl font-light tracking-tight text-forest mb-10">
             You May Also Like
           </h2>
