@@ -1,18 +1,43 @@
 "use client"
 
-
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useCartStore } from "@/stores/cart-store"
+import { useCartStore, type CartItem } from "@/stores/cart-store"
 import { getProductUrl } from "@/lib/utils"
 import { X, Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem } = useCartStore()
   const subtotal = useCartStore((state) => state.getSubtotal())
   const totalItems = useCartStore((state) => state.getTotalItems())
 
+  const [mounted, setMounted] = useState(false)
+  const [deletingItem, setDeletingItem] = useState<CartItem | null>(null)
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleDecreaseQuantity = (item: CartItem) => {
+    if (item.quantity <= 1) {
+      setDeletingItem(item)
+    } else {
+      updateQuantity(item.product.id, item.quantity - 1)
+    }
+  }
+
+  const handleConfirmDelete = () => {
+    if (deletingItem) {
+      removeItem(deletingItem.product.id)
+      setDeletingItem(null)
+    }
+  }
+
+  const freeShippingThreshold = 1000
+  const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100)
+  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal)
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
@@ -33,11 +58,11 @@ export default function CartDrawer() {
           }`}
         >
           {/* Drawer Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-forest/15 bg-light">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 bg-light">
             <div className="flex items-center gap-2">
               <ShoppingBag className="size-5 text-forest" />
               <h2 className="text-base font-semibold tracking-wider uppercase text-forest">
-                Shopping Bag ({totalItems})
+                Shopping Bag ({mounted ? totalItems : 0})
               </h2>
             </div>
             <button
@@ -47,6 +72,20 @@ export default function CartDrawer() {
             >
               <X className="size-5" />
             </button>
+          </div>
+
+          {/* Free Shipping Progress Bar Header */}
+          <div className="px-6 py-3.5 space-y-2">
+            <p className="text-xs font-semibold text-forest text-center tracking-wide">
+              {subtotal >= freeShippingThreshold ? (
+                "Enjoy free shipping!"
+              ) : (
+                <>
+                  Add <span className="font-bold">₱{remainingForFreeShipping.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span> more for Free Shipping
+                </>
+              )}
+            </p>
+            <Progress value={progressPercent} className="h-1.5" />
           </div>
 
           {/* Drawer Body: Item List or Empty State */}
@@ -104,21 +143,18 @@ export default function CartDrawer() {
                           <Link
                             href={getProductUrl(item.product)}
                             onClick={closeCart}
-                            className="text-xs font-medium text-forest hover:underline line-clamp-1"
+                            className="text-xs font-semibold text-forest line-clamp-2 uppercase tracking-wider hover:text-forest/80 transition-colors"
                           >
                             {item.product.name}
                           </Link>
                           <button
-                            onClick={() => removeItem(item.product.id)}
-                            className="text-forest/30 hover:text-red-600 transition-colors p-1 ml-2"
+                            onClick={() => setDeletingItem(item)}
+                            className="text-forest/30 hover:text-red-600 hover:cursor-pointer transition-colors p-1 ml-2"
                             aria-label="Remove item"
                           >
                             <Trash2 className="size-3.5" />
                           </button>
                         </div>
-                        <p className="text-[10px] uppercase tracking-wider text-forest/50 mt-0.5">
-                          {item.product.category?.name}
-                        </p>
                         <p className="text-xs font-medium text-forest/80 mt-1">
                           ₱{item.product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                         </p>
@@ -128,8 +164,8 @@ export default function CartDrawer() {
                       <div className="flex items-center justify-between mt-3">
                         <div className="inline-flex items-center border border-forest/15 rounded-xs">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="flex size-7 items-center justify-center text-forest/70 hover:bg-champagne transition-colors"
+                            onClick={() => handleDecreaseQuantity(item)}
+                            className="flex size-7 items-center justify-center text-forest/70 hover:bg-champagne transition-colors cursor-pointer"
                             aria-label="Decrease quantity"
                           >
                             <Minus className="size-3" />
@@ -139,8 +175,10 @@ export default function CartDrawer() {
                           </span>
                           <button
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="flex size-7 items-center justify-center text-forest/70 hover:bg-champagne transition-colors"
+                            disabled={item.quantity >= item.product.stock}
+                            className="flex size-7 items-center justify-center text-forest/70 hover:bg-champagne transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             aria-label="Increase quantity"
+                            title={item.quantity >= item.product.stock ? `Max stock (${item.product.stock}) reached` : "Increase quantity"}
                           >
                             <Plus className="size-3" />
                           </button>
@@ -167,10 +205,6 @@ export default function CartDrawer() {
                 </span>
               </div>
 
-              <p className="text-[11px] text-forest/50 text-center">
-                Complimentary shipping & taxes calculated at checkout.
-              </p>
-
               <Link
                 href="/checkout"
                 onClick={closeCart}
@@ -183,6 +217,37 @@ export default function CartDrawer() {
           )}
         </div>
       </div>
+
+      {/* Clean Delete Confirmation Modal */}
+      {deletingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 pointer-events-auto">
+          <div className="w-full max-w-sm bg-light p-6 shadow-2xl border border-forest/15 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div>
+              <h3 className="text-base font-semibold uppercase tracking-wider text-forest">
+                Remove item from bag?
+              </h3>
+              <p className="text-xs font-medium text-forest/70 mt-2">
+                {deletingItem.product.name}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2.5 text-xs font-semibold uppercase tracking-wider bg-forest text-ghost-white hover:bg-forest-light transition-colors cursor-pointer shadow-xs"
+              >
+                Remove Item
+              </button>
+              <button
+                onClick={() => setDeletingItem(null)}
+                className="flex-1 py-2.5 text-xs font-semibold uppercase tracking-wider border border-forest/15 text-forest/70 hover:bg-champagne transition-colors cursor-pointer"
+              >
+                Don&apos;t Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
