@@ -2,66 +2,73 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ShoppingBag, Search, Menu, X, ChevronDown, User } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { useCartStore } from "@/stores/cart-store";
-import { createClient } from "@/lib/supabase/client";
-import type { Category } from "@/types/database";
+import { useRouter, usePathname } from "next/navigation"
+import { ShoppingBag, Search, Menu, X, ChevronDown, User } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { useCartStore } from "@/stores/cart-store"
+import { createClient } from "@/lib/supabase/client"
+import type { Category } from "@/types/database"
 
-import { slugify } from "@/lib/utils";
+import { slugify } from "@/lib/utils"
 
 export default function Navbar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [categoryHovered, setCategoryHovered] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter()
+  const pathname = usePathname()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [categoryHovered, setCategoryHovered] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const cartItemCount = useCartStore((state) => state.getTotalItems());
-  const openCart = useCartStore((state) => state.openCart);
+  const cartItemCount = useCartStore((state) => state.getTotalItems())
+  const openCart = useCartStore((state) => state.openCart)
 
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false)
+
+  // Sync search input state with URL search param on page changes / mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      setSearchQuery(params.get("search") || "")
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (isSearchOpen) {
-      searchInputRef.current?.focus();
+      searchInputRef.current?.focus()
     }
-  }, [isSearchOpen]);
+  }, [isSearchOpen])
 
   // Fetch dynamic categories from Supabase and handle client hydration
   useEffect(() => {
-    setMounted(true);
+    setMounted(true)
     async function fetchCategories() {
-      const supabase = createClient();
+      const supabase = createClient()
       const { data } = await supabase
         .from("categories")
         .select("*")
-        .order("name");
+        .order("name")
       if (data) {
-        setCategories(data as Category[]);
+        setCategories(data as Category[])
       }
     }
-    fetchCategories();
-  }, []);
+    fetchCategories()
+  }, [])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setMobileMenuOpen(false);
-    const params = new URLSearchParams(searchParams.toString());
+    e.preventDefault()
+    setMobileMenuOpen(false)
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
     if (searchQuery.trim()) {
-      params.set("search", searchQuery.trim());
+      params.set("search", searchQuery.trim())
     } else {
-      params.delete("search");
+      params.delete("search")
     }
-    const targetPath = pathname === "/" ? "/all" : pathname;
-    const queryString = params.toString();
-    router.push(queryString ? `${targetPath}?${queryString}` : targetPath);
-  };
+    const targetPath = pathname === "/" ? "/all" : pathname
+    const queryString = params.toString()
+    router.push(queryString ? `${targetPath}?${queryString}` : targetPath)
+  }
 
   return (
     <header
