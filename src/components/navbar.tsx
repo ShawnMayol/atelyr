@@ -1,54 +1,76 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ShoppingBag, Search, Menu, X, ChevronDown } from "lucide-react"
-import { useState, useEffect } from "react"
-import { useCartStore } from "@/stores/cart-store"
-import { createClient } from "@/lib/supabase/client"
-import type { Category } from "@/types/database"
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { ShoppingBag, Search, Menu, X, ChevronDown, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useCartStore } from "@/stores/cart-store";
+import { createClient } from "@/lib/supabase/client";
+import type { Category } from "@/types/database";
 
-import { slugify } from "@/lib/utils"
+import { slugify } from "@/lib/utils";
 
 export default function Navbar() {
-  const router = useRouter()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [categoryHovered, setCategoryHovered] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoryHovered, setCategoryHovered] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const cartItemCount = useCartStore((state) => state.getTotalItems())
-  const openCart = useCartStore((state) => state.openCart)
+  const cartItemCount = useCartStore((state) => state.getTotalItems());
+  const openCart = useCartStore((state) => state.openCart);
 
-  // Fetch dynamic categories from Supabase
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchOpen]);
+
+  // Fetch dynamic categories from Supabase and handle client hydration
+  useEffect(() => {
+    setMounted(true);
     async function fetchCategories() {
-      const supabase = createClient()
-      const { data } = await supabase.from("categories").select("*").order("name")
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name");
       if (data) {
-        setCategories(data as Category[])
+        setCategories(data as Category[]);
       }
     }
-    fetchCategories()
-  }, [])
+    fetchCategories();
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const targetCat = categories.length > 0 ? slugify(categories[0].name) : ""
-    if (targetCat) {
-      router.push(`/${targetCat}`)
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    } else {
+      params.delete("search");
     }
-  }
+    const targetPath = pathname === "/" ? "/all" : pathname;
+    const queryString = params.toString();
+    router.push(queryString ? `${targetPath}?${queryString}` : targetPath);
+  };
 
   return (
     <header
-      className="sticky top-0 z-40 w-full border-b border-forest/10 bg-light backdrop-blur-md relative"
+      className="sticky top-0 z-40 w-full  bg-light backdrop-blur-md relative"
       onMouseLeave={() => setCategoryHovered(false)}
     >
-      {/* Top announcement bar */}
+      {/* Top Promotional banner */}
       <div className="bg-forest text-ghost-white text-center text-xs tracking-widest uppercase py-2.5 px-4">
-        Complimentary shipping on all orders over ₱500
+        Free shipping on all orders over ₱1000
       </div>
 
       {/* Main Navbar Bar */}
@@ -58,11 +80,15 @@ export default function Navbar() {
           {/* Mobile menu toggle */}
           <button
             type="button"
-            className="lg:hidden -m-2.5 p-2.5 text-forest"
+            className="lg:hidden -m-2.5 p-2.5 text-forest cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {mobileMenuOpen ? (
+              <X className="size-5" />
+            ) : (
+              <Menu className="size-5" />
+            )}
           </button>
 
           {/* Categories Hover Trigger (Desktop) */}
@@ -98,29 +124,78 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Section: Static Search Bar + Cart Shopping Bag Icon */}
+        {/* Right Section */}
         <div className="flex items-center gap-x-4">
-          {/* Static Search Bar (Desktop - Right Side) */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:relative md:flex items-center">
-            <Search className="absolute left-3 size-3.5 text-forest/40 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-44 lg:w-56 rounded-full border border-forest/15 bg-light/60 py-1.5 pl-8 pr-3 text-xs text-forest placeholder:text-forest/40 focus:border-forest/40 focus:bg-light focus:outline-none transition-all"
-            />
-          </form>
+          {/* Expandable Search Bar */}
+          {!mobileMenuOpen && (
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden lg:flex items-center justify-end relative"
+            >
+              <div
+                className={`flex items-center flex-row-reverse transition-all duration-300 ease-in-out overflow-hidden border-b ${
+                  isSearchOpen || searchQuery
+                    ? "w-44 lg:w-56 border-forest/30 focus-within:border-forest"
+                    : "w-9 border-transparent"
+                }`}
+              >
+                {/* Search Icon Button (On Right) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isSearchOpen && searchQuery.trim()) {
+                      const form = searchInputRef.current?.form;
+                      if (form) form.requestSubmit();
+                    } else {
+                      setIsSearchOpen(!isSearchOpen);
+                    }
+                  }}
+                  className="p-1 text-forest/80 hover:text-forest transition-colors cursor-pointer flex-shrink-0"
+                  aria-label="Toggle search"
+                >
+                  <Search className="size-5" />
+                </button>
 
-          {/* Cart Icon Button */}
+                {/* Search Input Field */}
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search Products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onBlur={() => {
+                    if (!searchQuery.trim()) {
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                  className={`bg-transparent py-1.5 pl-2 text-xs text-forest placeholder:text-forest/40 focus:outline-none transition-all duration-300 ${
+                    isSearchOpen || searchQuery
+                      ? "w-full opacity-100"
+                      : "w-0 opacity-0 pointer-events-none p-0"
+                  }`}
+                />
+              </div>
+            </form>
+          )}
+
+          {/* Profile / Account Icon (Desktop Only) */}
+          <Link
+            href="/admin/products"
+            className="hidden lg:flex p-1 text-forest/80 hover:text-forest transition-colors cursor-pointer"
+            aria-label="Account"
+          >
+            <User className="size-5" />
+          </Link>
+
+          {/* Shopping Bag Cart Icon Button */}
           <button
             type="button"
             onClick={openCart}
-            className="relative p-1 text-forest/80 hover:text-forest transition-colors hover:cursor-pointer"
+            className="relative p-1 text-forest/80 hover:text-forest transition-colors cursor-pointer"
             aria-label="Shopping cart"
           >
             <ShoppingBag className="size-5" />
-            {cartItemCount > 0 && (
+            {mounted && cartItemCount > 0 && (
               <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-forest text-[10px] font-medium text-ghost-white shadow-xs">
                 {cartItemCount}
               </span>
@@ -129,9 +204,9 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Floating Categories Overlay (Spans from Categories start to Cart end) */}
+      {/* Floating Categories Overlay (Desktop Hover) */}
       <div
-        className={`absolute top-full left-0 right-0 w-full bg-light border-b border-forest/10 shadow-xl overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`absolute top-full left-0 right-0 w-full bg-light border-b border-forest/10 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           categoryHovered
             ? "max-h-24 opacity-100 py-4 pointer-events-auto"
             : "max-h-0 opacity-0 py-0 border-b-0 pointer-events-none"
@@ -157,21 +232,32 @@ export default function Navbar() {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-forest/10 bg-light px-6 py-4 space-y-4 animate-in fade-in duration-200">
+        <div className="absolute top-full left-0 right-0 z-50 w-full border-b border-forest/15 bg-light px-6 py-6 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 lg:hidden">
           {/* Mobile Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-            <Search className="absolute left-3 size-4 text-forest/40 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-forest/15 bg-light py-2 pl-9 pr-4 text-xs text-forest placeholder:text-forest/40 focus:border-forest/40 focus:outline-none"
-            />
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full flex items-center"
+          >
+            <div className="flex items-center flex-row-reverse w-full border-b border-forest/30 focus-within:border-forest pb-1">
+              <button
+                type="submit"
+                className="p-1 text-forest/80 hover:text-forest transition-colors cursor-pointer flex-shrink-0"
+                aria-label="Submit search"
+              >
+                <Search className="size-5" />
+              </button>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent py-1.5 pl-2 text-xs text-forest placeholder:text-forest/40 focus:outline-none"
+              />
+            </div>
           </form>
 
           {/* Mobile Dynamic Categories List */}
-          <div className="space-y-1 pt-2">
+          <div className="space-y-1 pt-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-forest/40 px-1 mb-2">
               Categories
             </p>
@@ -179,15 +265,27 @@ export default function Navbar() {
               <Link
                 key={cat.id}
                 href={`/${slugify(cat.name)}`}
-                className="block py-2 text-xs font-medium tracking-wide uppercase text-forest/70 hover:text-forest"
+                className="block py-2 text-xs font-semibold tracking-wider uppercase text-forest/80 hover:text-forest"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {cat.name}
               </Link>
             ))}
           </div>
+
+          {/* Profile / Account Link inside Mobile Menu */}
+          <div className="pt-3 border-t border-forest/10">
+            <Link
+              href="/admin/products"
+              className="flex items-center gap-2.5 py-2 text-xs font-semibold tracking-wider uppercase text-forest/80 hover:text-forest"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <User className="size-4 text-forest/60" />
+              Account
+            </Link>
+          </div>
         </div>
       )}
     </header>
-  )
+  );
 }
