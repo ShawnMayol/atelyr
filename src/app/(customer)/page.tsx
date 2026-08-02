@@ -76,7 +76,7 @@ export default async function HomePage() {
         <section className="mx-auto w-full px-6 pb-20 lg:px-12">
           <div className="text-center mb-12 px-6 lg:px-12">
             <h2 className="text-2xl font-light tracking-tight text-forest sm:text-3xl">
-              Featured Crafts
+              Featured Products
             </h2>
           </div>
 
