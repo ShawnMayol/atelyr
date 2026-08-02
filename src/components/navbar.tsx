@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ShoppingBag, Search, Menu, X, ChevronDown } from "lucide-react"
@@ -86,9 +87,14 @@ export default function Navbar() {
         {/* Center Section: ATELYR Brand Logo */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold tracking-[0.35em] uppercase text-forest">
-              ATELYR
-            </span>
+            <Image
+              src="/brand.png"
+              alt="ATELYR"
+              width={160}
+              height={40}
+              priority
+              className="h-7 w-auto object-contain"
+            />
           </Link>
         </div>
 
