@@ -6,6 +6,7 @@ import Link from "next/link"
 import type { Product, Category } from "@/types/database"
 import { ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react"
 import AddToCartButton from "@/components/add-to-cart-button"
+import ProductCard from "@/components/product-card"
 import { getProductUrl, slugify } from "@/lib/utils"
 
 type ProductGridProps = {
@@ -267,59 +268,9 @@ export default function ProductGrid({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filtered.map((product) => (
-                <div key={product.id} className="group flex flex-col justify-between">
-                  <div>
-                    <Link href={getProductUrl(product)}>
-                      <div className="aspect-[3/4] w-full overflow-hidden bg-champagne rounded-xs">
-                        {product.image_url ? (
-                          <Image
-                            src={product.image_url}
-                            alt={product.name}
-                            width={600}
-                            height={800}
-                            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-forest/30">
-                            No Image
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="mt-4 space-y-1">
-                      <p className="text-[10px] font-medium tracking-widest uppercase text-forest/50">
-                        {product.category?.name}
-                      </p>
-                      <Link href={getProductUrl(product)}>
-                        <h3 className="text-sm font-medium text-forest group-hover:underline underline-offset-4 line-clamp-1">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <p className="text-sm font-medium text-forest">
-                          ₱{product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        </p>
-                        {product.stock <= 0 && (
-                          <span className="text-[10px] font-medium tracking-wide uppercase text-red-500">
-                            Out of Stock
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-2 border-t border-forest/10 flex items-center justify-between">
-                    <Link
-                      href={getProductUrl(product)}
-                      className="text-xs font-semibold tracking-widest uppercase text-forest/60 transition-colors hover:text-forest"
-                    >
-                      Details
-                    </Link>
-                    <AddToCartButton product={product} variant="minimal" />
-                  </div>
-                </div>
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
