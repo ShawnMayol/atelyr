@@ -41,7 +41,7 @@ export default async function ProductDetailPage({
   const backCategoryUrl = `/${categorySlug}`
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+    <div className="w-full px-6 py-12 lg:px-12">
       {/* Back link */}
       <Link
         href={backCategoryUrl}

@@ -51,7 +51,7 @@ export default function Navbar() {
       </div>
 
       {/* Main Navbar Bar */}
-      <nav className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+      <nav className="relative mx-auto flex h-16 w-full items-center justify-between px-6 lg:px-12">
         {/* Left Section: Dynamic Categories Trigger */}
         <div className="flex items-center gap-x-6">
           {/* Mobile menu toggle */}
@@ -133,7 +133,7 @@ export default function Navbar() {
         onMouseEnter={() => setCategoryHovered(true)}
         onMouseLeave={() => setCategoryHovered(false)}
       >
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto w-full px-6 lg:px-12">
           <div className="flex items-center justify-between w-full flex-wrap gap-y-2">
             {categories.map((cat) => (
               <Link

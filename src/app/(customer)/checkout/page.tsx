@@ -168,7 +168,7 @@ export default function CheckoutPage() {
 
   // Checkout form
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+    <div className="w-full px-6 py-12 lg:px-12">
       <Link
         href="/cart"
         className="inline-flex items-center gap-1.5 text-xs font-medium tracking-widest uppercase text-forest/50 transition-colors hover:text-forest mb-10"

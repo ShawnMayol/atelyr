@@ -57,7 +57,7 @@ export default async function HomePage() {
 
       {/* Category Showcase */}
       {categories && categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+        <section className="mx-auto w-full px-6 py-20 lg:px-12">
           <div className="text-center mb-12">
             <p className="text-xs font-medium tracking-[0.4em] uppercase text-forest/50 mb-3">
               Browse By
@@ -90,7 +90,7 @@ export default async function HomePage() {
 
       {/* Featured Products */}
       {normalizedProducts.length > 0 && (
-        <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8 border-t border-forest/10">
+        <section className="mx-auto w-full px-6 py-20 lg:px-12 border-t border-forest/10">
           <div className="flex items-end justify-between mb-12">
             <div>
               <p className="text-xs font-medium tracking-[0.4em] uppercase text-forest/50 mb-3">
@@ -102,7 +102,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {normalizedProducts.map((product) => (
               <div key={product.id} className="group">
                   <Link href={getProductUrl(product)}>

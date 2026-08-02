@@ -42,7 +42,7 @@ export default async function CategoryPage({
     })) as (Product & { category: Category })[]
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 space-y-8">
+    <div className="w-full px-6 py-10 lg:px-12 space-y-8">
       {/* Product Grid */}
       <ProductGrid
         products={categoryProducts}

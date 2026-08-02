@@ -87,10 +87,9 @@ export default function ProductGrid({
       <div className="lg:hidden flex items-center justify-between border-b border-forest/10 pb-4">
         <button
           onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-          className="inline-flex items-center gap-2 border border-forest/15 bg-light py-2 px-4 text-xs font-semibold uppercase tracking-wider text-forest"
+          className="inline-flex items-center gap-2 py-2 px-4 text-xs font-semibold uppercase tracking-wider text-forest"
         >
-          <SlidersHorizontal className="size-3.5" />
-          Filters & Categories
+          <SlidersHorizontal className="size-5" />
         </button>
 
         {/* Sort Select (Mobile) */}
@@ -109,7 +108,7 @@ export default function ProductGrid({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {/* Left Sidebar (Desktop + Mobile Collapsible) */}
         <aside
           className={`lg:col-span-1 space-y-8 ${
@@ -226,7 +225,7 @@ export default function ProductGrid({
         </aside>
 
         {/* Right Main Grid */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 xl:col-span-4 space-y-6">
           {/* Top Control Header Bar (Desktop) */}
           <div className="hidden lg:flex items-center justify-between pb-4 border-b border-forest/10">
             <p className="text-xs text-forest/50">
@@ -268,7 +267,7 @@ export default function ProductGrid({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filtered.map((product) => (
                 <div key={product.id} className="group flex flex-col justify-between">
                   <div>
