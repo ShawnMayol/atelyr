@@ -39,18 +39,22 @@ export const useCartStore = create<CartState>()(
             (item) => item.product.id === product.id
           )
 
+          const maxStock = product.stock || 1
+
           if (existing) {
+            const newQuantity = Math.min(existing.quantity + quantity, maxStock)
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: newQuantity }
                   : item
               ),
               isOpen: true,
             }
           }
 
-          return { items: [...state.items, { product, quantity }], isOpen: true }
+          const initialQty = Math.min(quantity, maxStock)
+          return { items: [...state.items, { product, quantity: initialQty }], isOpen: true }
         })
       },
 
@@ -61,9 +65,13 @@ export const useCartStore = create<CartState>()(
         }
 
         set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
+          items: state.items.map((item) => {
+            if (item.product.id === productId) {
+              const maxStock = item.product.stock || 1
+              return { ...item, quantity: Math.min(quantity, maxStock) }
+            }
+            return item
+          }),
         }))
       },
 
@@ -75,13 +83,14 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => set({ items: [] }),
 
+      // Count UNIQUE items
       getTotalItems: () => {
-        return get().items.reduce((total, item) => total + item.quantity, 0)
+        return get().items.length
       },
 
       getSubtotal: () => {
         return get().items.reduce(
-          (total, item) => total + item.product.price * item.quantity,
+          (total, item) => total + Number(item.product.price) * item.quantity,
           0
         )
       },
