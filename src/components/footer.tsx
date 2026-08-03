@@ -21,21 +21,21 @@ export default function Footer() {
   return (
     <footer className="border-t border-forest/10 bg-forest text-ghost-white">
       <div className="mx-auto w-full px-6 py-16 lg:px-12">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand column */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3 items-start">
+          {/* Brand & Socials Column */}
+          <div className="flex flex-col items-center text-center space-y-4">
             <Link href="/" className="inline-block">
               <Image
                 src="/brand-white.png"
                 alt="ATELYR"
                 width={160}
                 height={40}
-                className="h-7 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
             </Link>
 
             {/* Social Media Icons */}
-            <div className="flex items-center gap-4 pt-2 text-ghost-white/60">
+            <div className="flex items-center justify-center gap-4 pt-2 text-ghost-white/60">
               <a
                 href="#"
                 aria-label="Instagram"
@@ -73,53 +73,56 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Company links */}
-          <div>
-            <h3 className="text-xs font-semibold tracking-widest uppercase text-ghost-white mb-4">
-              Company
-            </h3>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-ghost-white/60 transition-colors hover:text-champagne"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Shared Column: Company & Support Links*/}
+          <div className="flex items-start justify-center gap-12 sm:gap-16">
+            {/* Company Section */}
+            <div>
+              <h3 className="text-xs font-semibold tracking-widest uppercase text-ghost-white mb-3">
+                Company
+              </h3>
+              <ul className="space-y-2">
+                {footerLinks.company.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-xs text-ghost-white/60 transition-colors hover:text-champagne"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support Section */}
+            <div>
+              <h3 className="text-xs font-semibold tracking-widest uppercase text-ghost-white mb-3">
+                Support
+              </h3>
+              <ul className="space-y-2">
+                {footerLinks.support.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-xs text-ghost-white/60 transition-colors hover:text-champagne"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Support links */}
-          <div>
-            <h3 className="text-xs font-semibold tracking-widest uppercase text-ghost-white mb-4">
-              Support
-            </h3>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-ghost-white/60 transition-colors hover:text-champagne"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter Column Placeholder */}
-          <div className="space-y-4">
+          {/* Newsletter Column */}
+          <div className="space-y-4 flex flex-col items-center md:items-start text-center md:text-left">
             <h3 className="text-xs font-semibold tracking-widest uppercase text-ghost-white">
               Newsletter
             </h3>
-            <p className="text-xs leading-relaxed text-ghost-white/60">
+            <p className="text-xs leading-relaxed text-ghost-white/60 max-w-xs">
               Subscribe for exclusive updates and private collection previews.
             </p>
-            <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 pt-1">
+            <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 pt-1 w-full max-w-xs">
               <input
                 type="email"
                 placeholder="Enter your email"
