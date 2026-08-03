@@ -199,7 +199,7 @@ export default function CartDrawer() {
           {items.length > 0 && (
             <div className="border-t border-forest/15 px-6 py-5 bg-light space-y-4">
               <div className="flex justify-between items-center text-sm font-medium">
-                <span className="uppercase tracking-widest text-xs text-forest/60">Subtotal</span>
+                <span className="uppercase tracking-widest text-xs text-forest/60">Total</span>
                 <span className="text-lg font-light text-forest">
                   ₱{subtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
