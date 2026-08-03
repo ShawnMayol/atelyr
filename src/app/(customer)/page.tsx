@@ -28,8 +28,8 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="relative flex h-[calc(100svh-64px)] w-full items-center justify-center overflow-hidden bg-black px-6 py-20">
+      {/* Hero Section - Static Height */}
+      <section className="relative flex h-[550px] sm:h-[650px] lg:h-[720px] w-full items-center justify-center overflow-hidden bg-black px-6 py-20">
         {/* Background Image with Dark Contrast Overlay */}
         <div className="absolute inset-0 z-0">
           <Image
