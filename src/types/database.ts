@@ -48,6 +48,7 @@ export type Order = {
   status: OrderStatus
   notes: string | null
   created_at: string
+  completed_at?: string | null
 }
 
 export type OrderItem = {
