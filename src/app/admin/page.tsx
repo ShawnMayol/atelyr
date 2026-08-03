@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
     { count: totalOrders },
     { count: pendingOrders },
     { count: completedOrders },
-    { count: totalCustomers },
+    { data: customerOrdersData },
     { data: salesData },
     { data: allOrdersData },
     { data: completedOrdersData },
@@ -30,7 +30,7 @@ export default async function AdminDashboardPage() {
     supabase.from("orders").select("*", { count: "exact", head: true }),
     supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "completed"),
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase.from("orders").select("email"),
     supabase.from("orders").select("total_amount").eq("status", "completed"),
     supabase
       .from("orders")
@@ -42,6 +42,11 @@ export default async function AdminDashboardPage() {
       .eq("status", "completed")
       .order("created_at", { ascending: true }),
   ])
+
+  // Count unique customers who placed at least one order
+  const totalCustomers = new Set(
+    (customerOrdersData || []).map((order) => order.email.toLowerCase().trim())
+  ).size
 
   // Calculate total revenue from non-cancelled orders
   const totalSales = (salesData || []).reduce(

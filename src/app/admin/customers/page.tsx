@@ -54,9 +54,9 @@ export default async function AdminCustomersPage() {
     }
   })
 
-  // Filter out Admin accounts so only customers appear in directory
+  // Filter out Admin accounts and users without orders
   const customerList = Array.from(customerMap.values()).filter(
-    (c) => c.role !== "admin"
+    (c) => c.role !== "admin" && c.orderCount > 0
   )
 
   return (
