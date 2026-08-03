@@ -18,6 +18,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
   revalidatePath("/admin/orders")
   revalidatePath(`/admin/orders/${orderId}`)
+  revalidatePath("/admin/products")
   revalidatePath("/admin")
   return { success: true }
 }
