@@ -35,9 +35,14 @@ export default function CartDrawer() {
     }
   }
 
+  // Prevent SSR/hydration mismatch by safely using client-only state after mount
+  const currentSubtotal = mounted ? subtotal : 0
+  const currentItems = mounted ? items : []
+  const currentTotalItems = mounted ? totalItems : 0
+
   const freeShippingThreshold = 1000
-  const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100)
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal)
+  const progressPercent = Math.min(100, (currentSubtotal / freeShippingThreshold) * 100)
+  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - currentSubtotal)
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
@@ -62,7 +67,7 @@ export default function CartDrawer() {
             <div className="flex items-center gap-2">
               <ShoppingBag className="size-5 text-forest" />
               <h2 className="text-base font-semibold tracking-wider uppercase text-forest">
-                Shopping Bag ({mounted ? totalItems : 0})
+                Shopping Bag ({currentTotalItems})
               </h2>
             </div>
             <button
@@ -77,7 +82,7 @@ export default function CartDrawer() {
           {/* Free Shipping Progress Bar Header */}
           <div className="px-6 py-3.5 space-y-2">
             <p className="text-xs font-semibold text-forest text-center tracking-wide">
-              {subtotal >= freeShippingThreshold ? (
+              {currentSubtotal >= freeShippingThreshold ? (
                 "Enjoy free shipping!"
               ) : (
                 <>
@@ -90,7 +95,7 @@ export default function CartDrawer() {
 
           {/* Drawer Body: Item List or Empty State */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            {items.length === 0 ? (
+            {currentItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-16 space-y-4">
                 <div className="size-16 rounded-full bg-forest/5 flex items-center justify-center text-forest/40">
                   <ShoppingBag className="size-8" />
@@ -107,7 +112,7 @@ export default function CartDrawer() {
               </div>
             ) : (
               <div className="divide-y divide-forest/15">
-                {items.map((item, idx) => (
+                {currentItems.map((item, idx) => (
                   <div
                     key={item.product.id}
                     className="flex gap-4 py-5 first:pt-0 last:pb-0 transition-all duration-300"
@@ -196,12 +201,12 @@ export default function CartDrawer() {
           </div>
 
           {/* Drawer Footer: Subtotal + Checkout Button */}
-          {items.length > 0 && (
+          {currentItems.length > 0 && (
             <div className="border-t border-forest/15 px-6 py-5 bg-light space-y-4">
               <div className="flex justify-between items-center text-sm font-medium">
                 <span className="uppercase tracking-widest text-xs text-forest/60">Total</span>
                 <span className="text-lg font-light text-forest">
-                  ₱{subtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  ₱{currentSubtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
               </div>
 
