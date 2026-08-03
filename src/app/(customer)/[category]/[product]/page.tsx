@@ -120,7 +120,7 @@ export default async function ProductDetailPage({
 
           {/* Collapsibles */}
           <div className="border-t border-forest/15 pt-2">
-            <AccordionItem title="DESCRIPTION AND SIZE GUIDE" defaultOpen={true}>
+            <AccordionItem title="PRODUCT DESCRIPTION" defaultOpen={true}>
               <p className="text-xs text-forest/70 leading-relaxed">
                 {typedProduct.description ||
                   "Crafted with meticulous attention to detail using premium materials. Designed for longevity and timeless elegance."}

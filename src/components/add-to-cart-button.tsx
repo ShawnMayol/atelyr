@@ -34,7 +34,7 @@ export default function AddToCartButton({
     return (
       <button
         disabled
-        className={`inline-flex items-center justify-center gap-2 text-xs font-semibold tracking-widest uppercase opacity-50 cursor-not-allowed ${
+        className={`inline-flex items-center justify-center gap-2 text-xs font-semibold tracking-widest uppercase opacity-50 ${
           variant === "minimal"
             ? "text-forest/40"
             : "w-full bg-forest/10 text-forest/50 py-3.5 px-6"
