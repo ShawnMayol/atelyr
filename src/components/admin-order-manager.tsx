@@ -1,28 +1,48 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
-import type { Order, OrderStatus } from "@/types/database"
+import type { Order, OrderStatus, PaymentMethod } from "@/types/database"
 import { updateOrderStatus } from "@/app/admin/orders/actions"
-import { Search, Eye, ChevronDown, Loader2 } from "lucide-react"
+import { Search, Eye, ChevronDown, Loader2, Filter, ShoppingBag } from "lucide-react"
+import { Pagination } from "@/components/ui/pagination"
 
 type AdminOrderManagerProps = {
   orders: Order[]
 }
 
+const ITEMS_PER_PAGE = 10
+
 const statusOptions: { value: OrderStatus; label: string; color: string }[] = [
-  { value: "pending", label: "Pending", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  { value: "confirmed", label: "Confirmed", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  { value: "preparing", label: "Preparing", color: "bg-purple-100 text-purple-800 border-purple-200" },
-  { value: "shipped", label: "Shipped", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
-  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800 border-green-200" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800 border-red-200" },
+  { value: "pending", label: "Pending", color: "bg-amber-50 text-amber-900 border-amber-200/80" },
+  { value: "confirmed", label: "Confirmed", color: "bg-sky-50 text-sky-900 border-sky-200/80" },
+  { value: "preparing", label: "Preparing", color: "bg-indigo-50 text-indigo-900 border-indigo-200/80" },
+  { value: "shipped", label: "Shipped", color: "bg-teal-50 text-teal-900 border-teal-200/80" },
+  { value: "completed", label: "Completed", color: "bg-emerald-50 text-emerald-900 border-emerald-200/80" },
+  { value: "cancelled", label: "Cancelled", color: "bg-rose-50 text-rose-900 border-rose-200/80" },
+]
+
+const paymentMethodOptions: { value: PaymentMethod; label: string }[] = [
+  { value: "cod", label: "Cash on Delivery" },
+  { value: "e_wallet", label: "E-Wallet" },
+  { value: "bank_transfer", label: "Bank Transfer" },
 ]
 
 export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
   const [search, setSearch] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("")
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("")
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, selectedStatus, selectedPaymentMethod])
+
+  const activeFilterCount =
+    (selectedStatus ? 1 : 0) + (selectedPaymentMethod ? 1 : 0)
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
@@ -33,10 +53,19 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
         o.customer_name.toLowerCase().includes(query) ||
         o.email.toLowerCase().includes(query)
       const matchStatus = !selectedStatus || o.status === selectedStatus
+      const matchPayment =
+        !selectedPaymentMethod || o.payment_method === selectedPaymentMethod
 
-      return matchSearch && matchStatus
+      return matchSearch && matchStatus && matchPayment
     })
-  }, [orders, search, selectedStatus])
+  }, [orders, search, selectedStatus, selectedPaymentMethod])
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filtered.slice(start, start + ITEMS_PER_PAGE)
+  }, [filtered, currentPage])
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingId(orderId)
@@ -50,9 +79,10 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
 
   return (
     <div className="space-y-6">
-      {/* Filters Bar */}
+      {/* Action / Search & Filter Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-md">
+        {/* Search */}
+        <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-forest/40" />
           <input
             type="text"
@@ -63,18 +93,97 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
           />
         </div>
 
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="border border-forest/15 bg-light py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-forest/70 focus:outline-none cursor-pointer"
-        >
-          <option value="">All Statuses</option>
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        {/* Filter Popover Trigger & Dropdown */}
+        <div className="flex items-center gap-3 justify-end">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`inline-flex items-center gap-2 border py-2.5 px-3.5 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer rounded-xs ${
+                isFilterOpen || activeFilterCount > 0
+                  ? "border-forest bg-champagne text-forest"
+                  : "border-forest/15 bg-light text-forest/70 hover:border-forest/30 hover:text-forest"
+              }`}
+              title="Filter Orders"
+            >
+              <Filter className="size-4" />
+              {activeFilterCount > 0 && (
+                <span className="flex size-4 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-ghost-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Filter Popover Dropdown */}
+            {isFilterOpen && (
+              <>
+                {/* Backdrop overlay */}
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setIsFilterOpen(false)}
+                />
+
+                <div className="absolute right-0 top-full mt-2 z-30 w-56 bg-light border border-forest/15 shadow-xl p-4 space-y-4 rounded-xs animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between border-b border-forest/15 pb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-forest">
+                      Filter Orders
+                    </span>
+                    {activeFilterCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedStatus("")
+                          setSelectedPaymentMethod("")
+                        }}
+                        className="text-[11px] font-medium text-forest/60 hover:text-forest underline transition-colors cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Order Status Filter */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-forest/50">
+                      Status
+                    </label>
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full border border-forest/15 bg-light py-2 px-2.5 text-xs font-medium text-forest focus:outline-none focus:border-forest/40 cursor-pointer rounded-xs"
+                    >
+                      <option value="">All Statuses</option>
+                      {statusOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Payment Method Filter */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-forest/50">
+                      Payment Method
+                    </label>
+                    <select
+                      value={selectedPaymentMethod}
+                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                      className="w-full border border-forest/15 bg-light py-2 px-2.5 text-xs font-medium text-forest focus:outline-none focus:border-forest/40 cursor-pointer rounded-xs"
+                    >
+                      <option value="">All Payment Methods</option>
+                      {paymentMethodOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Orders Table */}
@@ -83,37 +192,37 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
           <table className="w-full text-left text-xs">
             <thead className="bg-champagne border-b border-forest/15 text-forest/50 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4 font-semibold">Order Number</th>
-                <th className="py-3 px-4 font-semibold">Customer</th>
-                <th className="py-3 px-4 font-semibold">Date</th>
-                <th className="py-3 px-4 font-semibold">Payment Method</th>
-                <th className="py-3 px-4 font-semibold">Total Amount</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Action</th>
+                <th className="py-4 px-5 font-semibold">Order Number</th>
+                <th className="py-4 px-5 font-semibold">Customer</th>
+                <th className="py-4 px-5 font-semibold">Date</th>
+                <th className="py-4 px-5 font-semibold">Payment Method</th>
+                <th className="py-4 px-5 font-semibold">Total Amount</th>
+                <th className="py-4 px-5 font-semibold">Status</th>
+                <th className="py-4 px-5 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-forest/15 text-forest/70">
-              {filtered.length > 0 ? (
-                filtered.map((order) => {
+              {paginatedOrders.length > 0 ? (
+                paginatedOrders.map((order) => {
                   return (
-                    <tr key={order.id} className="hover:bg-champagne/50">
-                      <td className="py-3.5 px-4 font-mono font-medium text-forest">
+                    <tr key={order.id} className="hover:bg-champagne/50 transition-colors">
+                      <td className="py-4 px-5 font-mono font-medium text-forest text-xs">
                         #{order.id.slice(0, 8).toUpperCase()}
                       </td>
-                      <td className="py-3.5 px-4">
-                        <p className="font-medium text-forest">{order.customer_name}</p>
-                        <p className="text-[10px] text-forest/40">{order.email}</p>
+                      <td className="py-4 px-5">
+                        <p className="font-semibold text-forest text-xs">{order.customer_name}</p>
+                        <p className="text-[10px] text-forest/40 mt-0.5">{order.email}</p>
                       </td>
-                      <td className="py-3.5 px-4 text-forest/50">
+                      <td className="py-4 px-5 text-forest/50 text-xs">
                         {new Date(order.created_at).toLocaleDateString()}
                       </td>
-                      <td className="py-3.5 px-4 font-medium uppercase tracking-wider text-[11px]">
+                      <td className="py-4 px-5 font-medium uppercase tracking-wider text-[11px] text-forest/70">
                         {order.payment_method.replace(/_/g, " ")}
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-forest">
+                      <td className="py-4 px-5 font-semibold text-forest text-xs">
                         ₱{Number(order.total_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-4 px-5">
                         <div className="relative inline-block">
                           <select
                             value={order.status}
@@ -121,7 +230,7 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
                             onChange={(e) =>
                               handleStatusChange(order.id, e.target.value as OrderStatus)
                             }
-                            className={`appearance-none border text-[10px] font-semibold tracking-wider uppercase rounded-sm px-2.5 py-1 pr-6 cursor-pointer focus:outline-none disabled:opacity-50 ${
+                            className={`appearance-none border text-[10px] font-semibold tracking-wider uppercase rounded-xs px-2.5 py-1 pr-6 cursor-pointer focus:outline-none disabled:opacity-50 ${
                               statusOptions.find((s) => s.value === order.status)?.color
                             }`}
                           >
@@ -138,7 +247,7 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-4 px-5 text-right">
                         <Link
                           href={`/admin/orders/${order.id}`}
                           className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-forest/60 hover:text-forest transition-colors"
@@ -152,14 +261,39 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-forest/40">
-                    No orders match your filter criteria.
+                  <td colSpan={7} className="py-16 text-center text-forest/40">
+                    <ShoppingBag className="size-8 mx-auto mb-2 opacity-40" />
+                    No orders match your search or filter criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Shadcn Pagination Bar */}
+        {filtered.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-forest/15 bg-light">
+            <p className="text-xs text-forest/60">
+              Showing{" "}
+              <span className="font-semibold text-forest">
+                {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filtered.length)}
+              </span>{" "}
+              to{" "}
+              <span className="font-semibold text-forest">
+                {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
+              </span>{" "}
+              of <span className="font-semibold text-forest">{filtered.length}</span> orders
+            </p>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className="pt-0 justify-end"
+            />
+          </div>
+        )}
       </div>
     </div>
   )

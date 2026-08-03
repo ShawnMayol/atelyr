@@ -62,7 +62,7 @@ export async function deleteCategory(id: string) {
   if (count && count > 0) {
     return {
       success: false,
-      error: `Cannot delete category. There are ${count} active product(s) assigned to it. Please reassign or delete the products first.`,
+      error: `Cannot delete category. There are ${count} active product(s) assigned to it.`,
     }
   }
 

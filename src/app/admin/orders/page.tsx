@@ -12,12 +12,9 @@ export default async function AdminOrdersPage() {
     .order("created_at", { ascending: false })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <p className="text-xs font-medium tracking-[0.4em] uppercase text-forest/50 mb-2">
-          Management
-        </p>
-        <h1 className="text-3xl font-light tracking-tight text-forest">
+        <h1 className="text-3xl tracking-tight text-forest">
           Order Management
         </h1>
       </div>
