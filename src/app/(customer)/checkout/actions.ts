@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
 import type { PaymentMethod } from "@/types/database"
 
 type CheckoutData = {
@@ -55,6 +56,11 @@ export async function createOrder(data: CheckoutData) {
   if (itemsError) {
     return { success: false, error: itemsError.message }
   }
+
+  revalidatePath("/admin/products")
+  revalidatePath("/admin/orders")
+  revalidatePath("/admin")
+  revalidatePath("/[category]", "page")
 
   return { success: true, orderId: order.id }
 }
