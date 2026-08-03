@@ -49,7 +49,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href={categories && categories.length > 0 ? `/${slugify(categories[0].name)}` : "#"}
+              href="/all"
               className="inline-flex items-center gap-2 bg-champagne px-8 py-3.5 text-xs font-semibold tracking-widest uppercase text-forest transition-colors hover:bg-champagne-dark shadow-sm"
             >
               Shop Collection
