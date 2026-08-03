@@ -107,11 +107,6 @@ export default function AdminOrderManager({ orders }: AdminOrderManagerProps) {
               title="Filter Orders"
             >
               <Filter className="size-4" />
-              {activeFilterCount > 0 && (
-                <span className="flex size-4 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-ghost-white">
-                  {activeFilterCount}
-                </span>
-              )}
             </button>
 
             {/* Filter Popover Dropdown */}
