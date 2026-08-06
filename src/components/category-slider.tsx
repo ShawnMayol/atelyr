@@ -7,10 +7,10 @@ import type { Category } from "@/types/database"
 import { slugify } from "@/lib/utils"
 
 type CategorySliderProps = {
-  categories: Category[]
+  categories?: Category[]
 }
 
-export default function CategorySlider({ categories }: CategorySliderProps) {
+export default function CategorySlider({ categories = [] }: CategorySliderProps) {
   const sliderRef = useRef<HTMLDivElement>(null)
   const isMouseDown = useRef(false)
   const startX = useRef(0)
@@ -19,6 +19,7 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
   const lastX = useRef(0)
   const animFrameId = useRef<number | null>(null)
   const [hasDragged, setHasDragged] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   // Cancel momentum animation on unmount or new interaction
   const stopMomentum = () => {
@@ -29,6 +30,7 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
   }
 
   useEffect(() => {
+    setMounted(true)
     return () => stopMomentum()
   }, [])
 
@@ -92,6 +94,8 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
     lastX.current = e.pageX
   }
 
+  if (!categories || categories.length === 0) return null
+
   return (
     <div
       ref={sliderRef}
@@ -99,7 +103,7 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
       onMouseLeave={handleMouseLeave}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
-      className="flex gap-2 sm:gap-3 overflow-x-auto select-none py-2 px-6 lg:px-12 cursor-grab active:cursor-grabbing [::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x"
+      className="flex gap-2 sm:gap-3 overflow-x-auto select-none py-2 px-6 lg:px-12 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden [ms-overflow-style:none] [scrollbar-width:none] touch-pan-x"
     >
       {categories.map((category) => (
         <div
@@ -130,9 +134,9 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
                 </div>
               )}
             </div>
-            <p className="mt-3 text-xs font-semibold tracking-[0.18em] uppercase text-forest/90 transition-colors group-hover:text-forest select-none pointer-events-none">
+            <span className="mt-3 block text-xs font-semibold tracking-[0.18em] uppercase text-forest/90 transition-colors group-hover:text-forest select-none pointer-events-none">
               {category.name}
-            </p>
+            </span>
           </Link>
         </div>
       ))}
